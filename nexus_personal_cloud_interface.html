@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0c10;
+    --bg2: #0f1218;
+    --bg3: #141820;
+    --surface: #1a1f2e;
+    --surface2: #222840;
+    --border: rgba(100,120,200,0.15);
+    --border2: rgba(100,120,200,0.28);
+    --text: #e8eaf6;
+    --muted: #7880a8;
+    --dim: #454d6b;
+    --accent: #5b6ef5;
+    --accent2: #7c8fff;
+    --teal: #23d5ab;
+    --teal2: #1aad8a;
+    --amber: #f5a623;
+    --pink: #e060a0;
+    --green: #4ade80;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .noise-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 128px;
+  }
+
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image: linear-gradient(rgba(91,110,245,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(91,110,245,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    height: 100vh;
+    min-height: 700px;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .logo-area {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-mark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--teal));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+
+  .logo-sub {
+    font-size: 9px;
+    font-family: var(--mono);
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .node-status {
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--teal);
+    animation: pulse 2s infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(35,213,171,0.4); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(35,213,171,0); }
+  }
+
+  .node-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--teal);
+    letter-spacing: 0.08em;
+  }
+
+  .nav {
+    padding: 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+  }
+
+  .nav-section {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 10px 8px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    position: relative;
+  }
+
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+  .nav-item.active {
+    background: rgba(91,110,245,0.12);
+    color: var(--accent2);
+    border-color: rgba(91,110,245,0.2);
+  }
+
+  .nav-icon {
+    font-size: 14px;
+    width: 16px;
+    text-align: center;
+  }
+
+  .nav-badge {
+    margin-left: auto;
+    background: rgba(91,110,245,0.2);
+    color: var(--accent2);
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 20px;
+    font-weight: 400;
+  }
+
+  .sidebar-footer {
+    padding: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .storage-bar-wrap {
+    margin-bottom: 8px;
+  }
+
+  .storage-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  .storage-bar {
+    height: 3px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .storage-fill {
+    height: 100%;
+    width: 38%;
+    background: linear-gradient(90deg, var(--accent), var(--teal));
+    border-radius: 99px;
+    animation: storageLoad 1.2s ease-out;
+  }
+
+  @keyframes storageLoad { from { width: 0; } to { width: 38%; } }
+
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 7px;
+    transition: background 0.15s;
+  }
+
+  .user-chip:hover { background: var(--surface); }
+
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--pink), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-plan { font-family: var(--mono); font-size: 9px; color: var(--teal); }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    height: 60px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+  }
+
+  .view-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .ai-search-wrap {
+    flex: 1;
+    max-width: 480px;
+    position: relative;
+  }
+
+  .ai-search {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 8px 14px 8px 38px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .ai-search::placeholder { color: var(--muted); }
+  .ai-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,110,245,0.12); }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    pointer-events: none;
+    color: var(--muted);
+  }
+
+  .search-hint {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    background: var(--surface2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+  }
+
+  .btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border2);
+  }
+
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--surface); }
+
+  /* CONTENT AREA */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    gap: 16px;
+  }
+
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 99px; }
+
+  /* LEFT COLUMN */
+  .col-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  /* RIGHT PANEL */
+  .col-right {
+    width: 280px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.03em;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .card-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 400;
+  }
+
+  .tag-ai { background: rgba(91,110,245,0.2); color: var(--accent2); }
+  .tag-live { background: rgba(35,213,171,0.15); color: var(--teal); }
+  .tag-edge { background: rgba(245,166,35,0.15); color: var(--amber); }
+
+  /* AI QUERY PANEL */
+  .ai-query-panel {
+    padding: 16px;
+  }
+
+  .ai-query-example {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+
+  .ai-query-example:hover { border-color: var(--accent); color: var(--accent2); background: rgba(91,110,245,0.06); }
+  .ai-query-example:last-child { margin-bottom: 0; }
+
+  .query-prefix {
+    color: var(--accent);
+    margin-right: 4px;
+  }
+
+  /* AI RESPONSE */
+  .ai-response-wrap {
+    padding: 14px 16px;
+    display: none;
+  }
+
+  .ai-response-wrap.visible { display: block; }
+
+  .ai-thinking {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .think-dots {
+    display: flex;
+    gap: 3px;
+  }
+
+  .think-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: thinkBounce 1.2s infinite;
+  }
+
+  .think-dot:nth-child(2) { animation-delay: 0.2s; }
+  .think-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes thinkBounce {
+    0%, 80%, 100% { transform: scale(1); opacity: 0.5; }
+    40% { transform: scale(1.2); opacity: 1; }
+  }
+
+  .think-label { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+  .ai-answer {
+    background: rgba(91,110,245,0.07);
+    border: 1px solid rgba(91,110,245,0.18);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text);
+    display: none;
+  }
+
+  .ai-answer.visible { display: block; animation: fadeIn 0.4s ease; }
+
+  .ai-answer strong { color: var(--accent2); font-weight: 600; }
+
+  .ai-sources {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .source-chip {
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 3px 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* FILES GRID */
+  .files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .file-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.18s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .file-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(91,110,245,0.06));
+    opacity: 0;
+    transition: opacity 0.18s;
+  }
+
+  .file-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .file-card:hover::before { opacity: 1; }
+
+  .file-card.selected {
+    border-color: var(--accent);
+    background: rgba(91,110,245,0.07);
+  }
+
+  .file-icon-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .file-icon-wrap.img { background: rgba(232,96,160,0.12); }
+  .file-icon-wrap.doc { background: rgba(91,110,245,0.12); }
+  .file-icon-wrap.vid { background: rgba(245,166,35,0.12); }
+  .file-icon-wrap.audio { background: rgba(35,213,171,0.12); }
+  .file-icon-wrap.data { background: rgba(74,222,128,0.12); }
+
+  .ai-tag {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    border: 1.5px solid var(--surface);
+  }
+
+  .file-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+  }
+
+  .file-meta {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+  }
+
+  .file-tag {
+    display: inline-block;
+    margin-top: 5px;
+    font-family: var(--mono);
+    font-size: 8px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(91,110,245,0.15);
+    color: var(--accent2);
+  }
+
+  /* MEMORY GRAPH */
+  .memory-canvas-wrap {
+    padding: 8px;
+    height: 180px;
+    position: relative;
+  }
+
+  #memoryCanvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+
+  /* SYNTH FEED */
+  .synth-feed {
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .synth-feed::-webkit-scrollbar { width: 3px; }
+  .synth-feed::-webkit-scrollbar-thumb { background: var(--surface2); }
+
+  .synth-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+
+  .synth-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+
+  .synth-dot.green { background: var(--green); }
+  .synth-dot.blue { background: var(--accent2); }
+  .synth-dot.amber { background: var(--amber); }
+  .synth-dot.teal { background: var(--teal); }
+
+  .synth-text {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .synth-time {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+
+  /* EDGE PANEL */
+  .edge-status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .edge-cell {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .edge-cell-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  .edge-cell-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .edge-cell-sub {
+    font-family: var(--mono);
+    font-size: 9px;
+    margin-top: 2px;
+  }
+
+  /* NETWORK VIZ */
+  .network-wrap {
+    padding: 12px 14px;
+    height: 160px;
+  }
+
+  #networkCanvas { width: 100%; height: 100%; }
+
+  /* UPLOAD ZONE */
+  .upload-zone {
+    margin: 0 14px 14px;
+    border: 1.5px dashed var(--border2);
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .upload-zone:hover {
+    border-color: var(--accent);
+    background: rgba(91,110,245,0.05);
+  }
+
+  .upload-icon { font-size: 24px; margin-bottom: 6px; }
+  .upload-text { font-size: 12px; color: var(--muted); }
+  .upload-text strong { color: var(--accent2); font-weight: 600; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent); }
+
+  /* PROGRESS BAR MINI */
+  .mini-bar { height: 2px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-top: 4px; }
+  .mini-fill { height: 100%; border-radius: 99px; }
+
+  /* CONTEXT GRAPH */
+  .context-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px 14px;
+  }
+
+  .ctx-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .ctx-tag:hover { opacity: 0.75; }
+
+  .ctx-tag.travel { color: var(--amber); border-color: rgba(245,166,35,0.3); background: rgba(245,166,35,0.07); }
+  .ctx-tag.finance { color: var(--green); border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.07); }
+  .ctx-tag.work { color: var(--accent2); border-color: rgba(91,110,245,0.3); background: rgba(91,110,245,0.07); }
+  .ctx-tag.media { color: var(--pink); border-color: rgba(232,96,160,0.3); background: rgba(232,96,160,0.07); }
+  .ctx-tag.health { color: var(--teal); border-color: rgba(35,213,171,0.3); background: rgba(35,213,171,0.07); }
+</style>
+</head>
+<body>
+<div class="noise-overlay"></div>
+<div class="grid-bg"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo-area">
+      <div class="logo-mark">
+        <div class="logo-icon">⬡</div>
+        <div>
+          <div class="logo-text">NEXUS</div>
+          <div class="logo-sub">private cloud · v2.4</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="node-status">
+      <div class="pulse-dot"></div>
+      <div class="node-label">EDGE NODE ACTIVE</div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-section">Memory</div>
+      <div class="nav-item active" onclick="setView('memory')">
+        <span class="nav-icon">◈</span> Memory Graph
+      </div>
+      <div class="nav-item" onclick="setView('files')">
+        <span class="nav-icon">◻</span> All Files
+        <span class="nav-badge">2.4k</span>
+      </div>
+      <div class="nav-item" onclick="setView('files')">
+        <span class="nav-icon">◎</span> Semantic Clusters
+        <span class="nav-badge">18</span>
+      </div>
+
+      <div class="nav-section">Synthesis</div>
+      <div class="nav-item" onclick="setView('synth')">
+        <span class="nav-icon">⟳</span> Auto-Synthesis
+        <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item" onclick="setView('synth')">
+        <span class="nav-icon">▻</span> Recordings
+      </div>
+      <div class="nav-item" onclick="setView('synth')">
+        <span class="nav-icon">▦</span> Projects
+      </div>
+
+      <div class="nav-section">Edge</div>
+      <div class="nav-item" onclick="setView('edge')">
+        <span class="nav-icon">⌬</span> Edge Intelligence
+      </div>
+      <div class="nav-item" onclick="setView('edge')">
+        <span class="nav-icon">⊞</span> Nodes & Sync
+      </div>
+
+      <div class="nav-section">Access</div>
+      <div class="nav-item" onclick="setView('memory')">
+        <span class="nav-icon">⌗</span> Permissions
+      </div>
+      <div class="nav-item" onclick="setView('memory')">
+        <span class="nav-icon">⚿</span> Encryption Keys
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="storage-bar-wrap">
+        <div class="storage-label">
+          <span>Storage</span>
+          <span>1.84 / 5 TB</span>
+        </div>
+        <div class="storage-bar">
+          <div class="storage-fill"></div>
+        </div>
+      </div>
+      <div class="user-chip">
+        <div class="user-avatar">JS</div>
+        <div class="user-info">
+          <div class="user-name">Jordan S.</div>
+          <div class="user-plan">✦ Sovereign Plan</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="view-title" id="viewTitle">Memory Graph</div>
+      <div class="ai-search-wrap">
+        <span class="search-icon">⊛</span>
+        <input class="ai-search" id="searchInput" type="text"
+          placeholder="Ask anything about your files..."
+          onkeydown="handleSearch(event)" />
+        <span class="search-hint">↵ Ask AI</span>
+      </div>
+      <button class="btn btn-ghost" onclick="triggerUpload()">↑ Upload</button>
+      <button class="btn btn-primary" onclick="triggerUpload()">+ Add Content</button>
+    </div>
+
+    <!-- VIEWS -->
+    <div class="content" id="mainContent">
+      <!-- MEMORY VIEW (default) -->
+      <div class="col-left" id="viewMemory">
+        <!-- AI Query -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⊛ Semantic Query</div>
+            <span class="card-tag tag-ai">AI POWERED</span>
+          </div>
+          <div class="ai-query-panel" id="queryPanel">
+            <div class="ai-query-example" onclick="runQuery(this, 0)">
+              <span class="query-prefix">›</span> How much did I spend on coffee during my Tokyo trip?
+            </div>
+            <div class="ai-query-example" onclick="runQuery(this, 1)">
+              <span class="query-prefix">›</span> Find all contracts that mention a renewal clause
+            </div>
+            <div class="ai-query-example" onclick="runQuery(this, 2)">
+              <span class="query-prefix">›</span> What promises were made in last week's product meeting?
+            </div>
+            <div class="ai-query-example" onclick="runQuery(this, 3)">
+              <span class="query-prefix">›</span> Show photos from my healthiest month this year
+            </div>
+          </div>
+          <div class="ai-response-wrap" id="aiResponse">
+            <div class="ai-thinking" id="aiThinking">
+              <div class="think-dots">
+                <div class="think-dot"></div>
+                <div class="think-dot"></div>
+                <div class="think-dot"></div>
+              </div>
+              <div class="think-label">Scanning memory index...</div>
+            </div>
+            <div class="ai-answer" id="aiAnswer"></div>
+          </div>
+        </div>
+
+        <!-- Files Grid -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">◻ Recent Files</div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span class="card-tag tag-live">LIVE SYNC</span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;" onclick="document.getElementById('filesTab2').click()">See all →</span>
+            </div>
+          </div>
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'all')">All</div>
+            <div class="tab" onclick="switchTab(this,'images')">Images</div>
+            <div class="tab" onclick="switchTab(this,'docs')">Documents</div>
+            <div class="tab" onclick="switchTab(this,'media')">Media</div>
+          </div>
+          <div class="files-grid" id="filesGrid"></div>
+        </div>
+
+        <!-- Context Tags -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">◎ Semantic Clusters</div>
+            <span class="card-tag tag-ai">AUTO-TAGGED</span>
+          </div>
+          <div class="context-tags">
+            <div class="ctx-tag travel">✈ tokyo-trip</div>
+            <div class="ctx-tag finance">$ receipts-2025</div>
+            <div class="ctx-tag work">⊞ q2-planning</div>
+            <div class="ctx-tag media">◉ family-photos</div>
+            <div class="ctx-tag health">♡ fitness-log</div>
+            <div class="ctx-tag work">▦ contracts</div>
+            <div class="ctx-tag travel">⌖ travel-docs</div>
+            <div class="ctx-tag finance">≋ invoices</div>
+            <div class="ctx-tag media">▻ recordings</div>
+            <div class="ctx-tag work">⬡ meetings</div>
+            <div class="ctx-tag health">⊕ medical</div>
+            <div class="ctx-tag finance">◆ subscriptions</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN (always visible) -->
+      <div class="col-right">
+        <!-- Memory Network -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⬡ Memory Network</div>
+            <span class="card-tag tag-live">LIVE</span>
+          </div>
+          <div class="memory-canvas-wrap">
+            <canvas id="memoryCanvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Auto-Synthesis Feed -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⟳ Synthesis Feed</div>
+            <span class="card-tag tag-ai">AI</span>
+          </div>
+          <div class="synth-feed" id="synthFeed"></div>
+        </div>
+
+        <!-- Edge Status -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⌬ Edge Node</div>
+            <span class="card-tag tag-edge">LOCAL</span>
+          </div>
+          <div class="edge-status-grid">
+            <div class="edge-cell">
+              <div class="edge-cell-label">Model</div>
+              <div class="edge-cell-value" style="font-size:13px;font-family:var(--mono);">NX-7B</div>
+              <div class="edge-cell-sub" style="color:var(--teal);">● on-device</div>
+            </div>
+            <div class="edge-cell">
+              <div class="edge-cell-label">Cache</div>
+              <div class="edge-cell-value">84%</div>
+              <div class="mini-bar"><div class="mini-fill" style="width:84%;background:var(--teal);"></div></div>
+            </div>
+            <div class="edge-cell">
+              <div class="edge-cell-label">Offline</div>
+              <div class="edge-cell-value" style="font-size:13px;">Ready</div>
+              <div class="edge-cell-sub" style="color:var(--green);">✓ 2.1k items</div>
+            </div>
+            <div class="edge-cell">
+              <div class="edge-cell-label">Latency</div>
+              <div class="edge-cell-value">12ms</div>
+              <div class="edge-cell-sub" style="color:var(--muted);">avg</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const files = [
+  { name: 'Tokyo_receipts.pdf', type: 'doc', size: '2.1 MB', tag: 'tokyo-trip', icon: '📄' },
+  { name: 'Shinjuku_dinner.jpg', type: 'img', size: '4.7 MB', tag: 'tokyo-trip', icon: '🖼' },
+  { name: 'Q2_planning.mp4', type: 'vid', size: '342 MB', tag: 'q2-planning', icon: '🎬' },
+  { name: 'Contract_v3.docx', type: 'doc', size: '880 KB', tag: 'contracts', icon: '📝' },
+  { name: 'Morning_run.gpx', type: 'data', size: '124 KB', tag: 'fitness-log', icon: '📊' },
+  { name: 'Family_beach.jpg', type: 'img', size: '6.2 MB', tag: 'family-photos', icon: '🖼' },
+  { name: 'Meeting_06-04.m4a', type: 'audio', size: '28 MB', tag: 'meetings', icon: '🎙' },
+  { name: 'Invoice_042.pdf', type: 'doc', size: '345 KB', tag: 'invoices', icon: '📄' },
+  { name: 'Passport_scan.jpg', type: 'img', size: '1.8 MB', tag: 'travel-docs', icon: '🖼' },
+  { name: 'Budgets_2025.xlsx', type: 'data', size: '1.1 MB', tag: 'receipts-2025', icon: '📊' },
+  { name: 'Demo_recording.mp4', type: 'vid', size: '512 MB', tag: 'q2-planning', icon: '🎬' },
+  { name: 'Lab_results.pdf', type: 'doc', size: '230 KB', tag: 'medical', icon: '📄' },
+];
+
+const aiAnswers = [
+  { text: 'Analyzing <strong>14 receipts</strong> and <strong>3 bank statements</strong> from your Tokyo trip (Apr 12–19)...<br><br>You spent <strong>¥18,420 (≈ $123 USD)</strong> on coffee across 11 visits. Favorite: <strong>Fuglen Tokyo</strong> (5 visits). Morning trips averaged ¥1,200/visit.', sources: ['Tokyo_receipts.pdf', 'Shinjuku_day2.jpg', 'bank_apr.csv'] },
+  { text: 'Scanning <strong>23 contracts</strong> in your archive...<br><br>Found <strong>7 documents</strong> with renewal clauses: <em>Contract_v3.docx</em>, <em>SaaS_agreement.pdf</em>, and 5 others. Earliest renewal: <strong>Sep 1, 2025</strong>. I\'ve added a calendar reminder.', sources: ['Contract_v3.docx', 'SaaS_agreement.pdf', 'vendor_04.pdf'] },
+  { text: 'Processed <strong>Meeting_06-04.m4a</strong> (47 min)...<br><br>Found <strong>3 verbal commitments</strong>: (1) Launch moved to Aug 15, (2) Design review every Friday, (3) Sarah to lead beta outreach. <strong>Calendar updated</strong> with 8 new events.', sources: ['Meeting_06-04.m4a', 'Q2_planning.mp4'] },
+  { text: 'Analyzing health data from <strong>March 2025</strong> (your highest activity score)...<br><br>Returning <strong>42 photos</strong> from that period — mostly morning runs, meal preps, and outdoor activities. Average sleep: <strong>7.8h</strong>. Correlation with outdoor time: +0.87.', sources: ['Morning_run.gpx', 'health_mar.json', 'photos/'] },
+];
+
+function renderFiles() {
+  const grid = document.getElementById('filesGrid');
+  grid.innerHTML = '';
+  files.forEach((f, i) => {
+    const card = document.createElement('div');
+    card.className = 'file-card';
+    card.onclick = () => card.classList.toggle('selected');
+    card.innerHTML = `
+      <div class="file-icon-wrap ${f.type}">
+        <span style="font-size:20px;">${f.icon}</span>
+        ${i % 3 === 0 ? '<div class="ai-tag">✦</div>' : ''}
+      </div>
+      <div class="file-name">${f.name}</div>
+      <div class="file-meta">${f.size}</div>
+      <div class="file-tag">${f.tag}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function switchTab(el, type) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function runQuery(el, idx) {
+  const panel = document.getElementById('queryPanel');
+  const response = document.getElementById('aiResponse');
+  const thinking = document.getElementById('aiThinking');
+  const answer = document.getElementById('aiAnswer');
+
+  response.classList.add('visible');
+  thinking.style.display = 'flex';
+  answer.classList.remove('visible');
+  answer.innerHTML = '';
+
+  panel.style.display = 'none';
+
+  setTimeout(() => {
+    thinking.querySelector('.think-label').textContent = 'Cross-referencing semantic index...';
+  }, 600);
+
+  setTimeout(() => {
+    thinking.querySelector('.think-label').textContent = 'Synthesizing from 2,400+ files...';
+  }, 1200);
+
+  setTimeout(() => {
+    thinking.style.display = 'none';
+    const a = aiAnswers[idx];
+    answer.innerHTML = a.text + '<div class="ai-sources">' +
+      a.sources.map(s => `<div class="source-chip">⊛ ${s}</div>`).join('') +
+      '</div>' +
+      '<div style="margin-top:10px;"><span style="font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;" onclick="resetQuery()">← New query</span></div>';
+    answer.classList.add('visible');
+  }, 2000);
+}
+
+function resetQuery() {
+  document.getElementById('queryPanel').style.display = 'block';
+  document.getElementById('aiResponse').classList.remove('visible');
+}
+
+function handleSearch(e) {
+  if (e.key === 'Enter') {
+    const q = e.target.value.trim();
+    if (!q) return;
+    const panel = document.getElementById('queryPanel');
+    const response = document.getElementById('aiResponse');
+    const thinking = document.getElementById('aiThinking');
+    const answer = document.getElementById('aiAnswer');
+
+    response.classList.add('visible');
+    thinking.style.display = 'flex';
+    thinking.querySelector('.think-label').textContent = 'Processing query...';
+    answer.classList.remove('visible');
+    panel.style.display = 'none';
+    e.target.value = '';
+
+    setTimeout(() => {
+      thinking.style.display = 'none';
+      answer.innerHTML = `Searching your memory for <strong>"${q}"</strong>...<br><br>Found contextual matches across <strong>12 files</strong> in your archive. Top match: <em>Meeting_06-04.m4a</em> with 94% semantic relevance.<div class="ai-sources"><div class="source-chip">⊛ semantic-index</div><div class="source-chip">⊛ 2,400 files</div></div><div style="margin-top:10px;"><span style="font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;" onclick="resetQuery()">← New query</span></div>`;
+      answer.classList.add('visible');
+    }, 2000);
+  }
+}
+
+function triggerUpload() {
+  const feed = document.getElementById('synthFeed');
+  const newItem = document.createElement('div');
+  newItem.className = 'synth-item';
+  newItem.innerHTML = `
+    <div class="synth-dot blue"></div>
+    <div>
+      <div class="synth-text">Analyzing new upload, tagging semantically...</div>
+      <div class="synth-time">just now</div>
+    </div>
+  `;
+  feed.prepend(newItem);
+}
+
+function setView(v) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  const titles = { memory: 'Memory Graph', files: 'All Files', synth: 'Auto-Synthesis', edge: 'Edge Intelligence' };
+  document.getElementById('viewTitle').textContent = titles[v] || 'Memory Graph';
+}
+
+// SYNTHESIS FEED
+const synthItems = [
+  { dot: 'green', text: 'Meeting_06-04.m4a → Extracted 3 tasks → Added to project board', time: '2 min ago' },
+  { dot: 'amber', text: 'Tokyo_receipts.pdf → Categorized 14 expenses → Updated budget tracker', time: '18 min ago' },
+  { dot: 'teal', text: 'Contract_v3.docx → Renewal Sep 1 detected → Calendar event created', time: '1 hr ago' },
+  { dot: 'blue', text: 'Morning_run.gpx → Fitness cluster updated → Weekly summary ready', time: '3 hr ago' },
+  { dot: 'green', text: 'Demo_recording.mp4 → Auto-transcribed → Linked to Q2 project', time: '5 hr ago' },
+];
+
+function renderSynthFeed() {
+  const feed = document.getElementById('synthFeed');
+  feed.innerHTML = '';
+  synthItems.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'synth-item';
+    el.style.animationDelay = `${i * 0.08}s`;
+    el.innerHTML = `
+      <div class="synth-dot ${item.dot}"></div>
+      <div>
+        <div class="synth-text">${item.text}</div>
+        <div class="synth-time">${item.time}</div>
+      </div>
+    `;
+    feed.appendChild(el);
+  });
+}
+
+// MEMORY NETWORK CANVAS
+function drawMemoryNetwork() {
+  const canvas = document.getElementById('memoryCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width, H = rect.height;
+
+  const nodes = [
+    { x: W*0.5, y: H*0.45, r: 12, color: '#5b6ef5', label: 'YOU', core: true },
+    { x: W*0.2, y: H*0.25, r: 7, color: '#23d5ab', label: 'Tokyo' },
+    { x: W*0.8, y: H*0.22, r: 7, color: '#f5a623', label: 'Work' },
+    { x: W*0.15, y: H*0.65, r: 6, color: '#e060a0', label: 'Photos' },
+    { x: W*0.82, y: H*0.65, r: 6, color: '#4ade80', label: 'Health' },
+    { x: W*0.5, y: H*0.12, r: 6, color: '#7c8fff', label: 'Finance' },
+    { x: W*0.3, y: H*0.78, r: 5, color: '#f5a623', label: 'Invoices' },
+    { x: W*0.72, y: H*0.82, r: 5, color: '#23d5ab', label: 'Meetings' },
+    { x: W*0.62, y: H*0.28, r: 5, color: '#e060a0', label: 'Contracts' },
+  ];
+
+  const edges = [[0,1],[0,2],[0,3],[0,4],[0,5],[1,5],[1,6],[2,8],[2,7],[4,7],[3,6],[5,8]];
+
+  let t = 0;
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    t += 0.01;
+
+    edges.forEach(([a,b]) => {
+      const n1 = nodes[a], n2 = nodes[b];
+      ctx.beginPath();
+      ctx.moveTo(n1.x, n1.y);
+      ctx.lineTo(n2.x, n2.y);
+      ctx.strokeStyle = 'rgba(100,120,200,0.14)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      const prog = (Math.sin(t + a + b) + 1) / 2;
+      const px = n1.x + (n2.x - n1.x) * prog;
+      const py = n1.y + (n2.y - n1.y) * prog;
+      ctx.beginPath();
+      ctx.arc(px, py, 2, 0, Math.PI*2);
+      ctx.fillStyle = n1.color + '90';
+      ctx.fill();
+    });
+
+    nodes.forEach(n => {
+      const pulse = n.core ? 2 + Math.sin(t*2)*1.5 : 0;
+      if (n.core) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r + pulse + 4, 0, Math.PI*2);
+        ctx.fillStyle = n.color + '18';
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r + (n.core ? pulse * 0.3 : 0), 0, Math.PI*2);
+      ctx.fillStyle = n.color + (n.core ? 'ff' : 'cc');
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(232,234,246,0.75)';
+      ctx.font = `${n.core ? '600 ' : ''}9px "Syne", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(n.label, n.x, n.y + n.r + 10);
+    });
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+renderFiles();
+renderSynthFeed();
+setTimeout(drawMemoryNetwork, 100);
+</script>
+</body>
+</html>
